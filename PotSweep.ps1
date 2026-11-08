@@ -1,11 +1,12 @@
-﻿# PotSweep.ps1 v2 - 收尾脚本: 读 PotCheck 报告的 ★ 名单, 把文件移进同盘的"损坏视频待删"
+﻿# PotSweep.ps1 v3 - 收尾脚本: 读 PotCheck 的名单, 把文件移进同盘的"损坏视频待删"
+# v3: 名单校验放宽: 主名单和"结尾待复核名单"都收; 复核名单会整批移走, 不逐个复核 (运行时有提醒)。
 # v2: 建夹和移动全程改用 .NET 字面路径接口 (v1 用 New-Item -Path, 路径里的 [] 会被当通配符,
 #     导致目标夹没建成、38 个全部移动失败); 失败时把目标路径和真实原因打在同一行。
 # 只是移动, 不是删除; 原相对路径完整保留, 移错了照移动记录拖回去即可。
 # 用法: 把 PotCheck-Report.txt 拖到 PotSweep.bat 上 (不拖则自动找桌面的 PotCheck-Report.txt)
 $ErrorActionPreference = 'Continue'
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
-Write-Host '=== PotSweep v2 ==='
+Write-Host '=== PotSweep v3 ==='
 
 $reportPath = $null
 if ($args.Count -ge 1 -and $args[0]) { $reportPath = $args[0] }
@@ -13,20 +14,29 @@ if (-not $reportPath) {
     $desk = [Environment]::GetFolderPath('Desktop')
     $cand = Join-Path $desk 'PotCheck-Report.txt'
     if (Test-Path -LiteralPath $cand) { $reportPath = $cand }
+    if (-not $reportPath) {
+        $cand2 = Join-Path $desk 'PotCheck-Review.txt'
+        if (Test-Path -LiteralPath $cand2) { $reportPath = $cand2 }
+    }
 }
 if (-not $reportPath -or -not (Test-Path -LiteralPath $reportPath)) {
-    Write-Host '没找到报告文件。请把 PotCheck-Report.txt 拖到 PotSweep.bat 上。'
+    Write-Host '没找到报告文件。请把 PotCheck-Report.txt 或 PotCheck-Review.txt 拖到 PotSweep.bat 上。'
     Read-Host '按回车退出'
     exit 1
 }
 
 $lines = Get-Content -LiteralPath $reportPath -Encoding UTF8
-if (-not ($lines | Select-String -SimpleMatch 'PotPlayer 试播检测报告' -Quiet)) {
+$isMain = [bool]($lines | Select-String -SimpleMatch 'PotPlayer 试播检测报告' -Quiet)
+$isReview = [bool]($lines | Select-String -SimpleMatch 'PotPlayer 结尾待复核名单' -Quiet)
+if (-not $isMain -and -not $isReview) {
     Write-Host '这不是 PotCheck 的报告文件, 已中止, 什么都没动。'
     Read-Host '按回车退出'
     exit 1
 }
 
+if ($isReview) {
+    Write-Host '注意: 这是"结尾待复核"名单。本脚本会把名单里的文件整批移进待删夹, 不逐个复核。'
+}
 $paths = New-Object System.Collections.Generic.List[string]
 foreach ($ln in $lines) {
     if ($ln -match '^([A-Za-z]:\\.*\.\w{2,5})\s+（') { $paths.Add($Matches[1]) }

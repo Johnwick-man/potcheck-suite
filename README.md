@@ -12,7 +12,7 @@ ffmpeg 系工具（ffprobe/ffmpeg 解码、各种「视频损坏检测」脚本�
 | 工具 | 作用 | 入口 |
 | --- | --- | --- |
 | **PotCheck** | 逐个试播开头+结尾，生成问题名单 | `PotCheck.bat` |
-| **PotSweep** | 按名单把坏文件移进「损坏视频待删」（只移不删） | `PotSweep.bat` |
+| **PotSweep** | 按名单（主名单/复核名单）把坏文件移进「损坏视频待删」（只移不删） | `PotSweep.bat` |
 | **CleanEmptyFolders** | 清理零文件的空文件夹壳（走回收站） | `CleanEmptyFolders.bat` |
 | PotTools | 上面三件的菜单入口 | `PotTools.bat` |
 
@@ -27,6 +27,7 @@ ffmpeg 系工具（ffprobe/ffmpeg 解码、各种「视频损坏检测」脚本�
 2. **收尾**：把 `PotCheck-Report.txt` 拖到 `PotSweep.bat` 上，确认数量后输 `Y`，
    文件被按原相对路径移进同盘根目录的 `损坏视频待删\`，并生成移动记录可回退。
    最后删不删，由你亲手决定。
+   复核名单 `PotCheck-Review.txt` 也可以拖给 PotSweep（v3 起）：会先打印提醒，确认后整批移走，不逐个复核。
 3. **清空壳**：把文件夹拖到 `CleanEmptyFolders.bat` 上，清理移动后留下的空文件夹。
 
 ## PotCheck 判定细节
@@ -45,7 +46,7 @@ ffmpeg 系工具（ffprobe/ffmpeg 解码、各种「视频损坏检测」脚本�
 
 - PotCheck **只标注**，永不移动/删除任何文件。
 - PotSweep 动手前先列名单数量与总大小，输 `Y` 才执行；只移动不删除；
-  校验报告标题，拖错文件直接拒绝；复核名单的标题与主报告不同，拖给 PotSweep 会被拒绝，防手滑。
+  校验报告标题，只认 PotCheck 的主名单与复核名单，拖错文件直接拒绝；复核名单整批移走前会先打印提醒。
 - CleanEmptyFolders 只删「一个文件都没有」的文件夹，且走回收站可还原。
 - 所有路径处理走 .NET 字面接口，对 `[ ]`、空格、中文、日文路径免疫。
 
